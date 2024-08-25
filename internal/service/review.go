@@ -41,7 +41,6 @@ func (s *ReviewService) CreateReview(ctx context.Context, req *pb.CreateReviewRe
 		return nil, pb.ErrorCreateReviewHasError("create review has error")
 	}
 	return &pb.CreateReviewReply{ReviewID: review.ReviewID}, nil
-
 }
 func (s *ReviewService) UpdateReview(ctx context.Context, req *pb.UpdateReviewRequest) (*pb.UpdateReviewReply, error) {
 	return &pb.UpdateReviewReply{}, nil
@@ -54,4 +53,18 @@ func (s *ReviewService) GetReview(ctx context.Context, req *pb.GetReviewRequest)
 }
 func (s *ReviewService) ListReview(ctx context.Context, req *pb.ListReviewRequest) (*pb.ListReviewReply, error) {
 	return &pb.ListReviewReply{}, nil
+}
+func (s *ReviewService) ReplyReview(ctx context.Context, req *pb.ReplyReviewReq) (*pb.ReplyReviewReply, error) {
+	reqs := &model.ReviewReplyInfo{
+		ReviewID:  req.ReviewId,
+		StoreID:   req.StoreId,
+		Content:   req.Content,
+		PicInfo:   req.PicInfo,
+		VideoInfo: req.VideoInfo,
+	}
+	reply, err := s.uc.CreateReply(ctx, reqs)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.ReplyReviewReply{ReplyId: reply.ReplyID}, nil
 }

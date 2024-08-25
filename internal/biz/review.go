@@ -11,6 +11,8 @@ import (
 type ReviewRepo interface {
 	Save(context.Context, *model.ReviewInfo) (*model.ReviewInfo, error)
 	FindByOrder(context.Context, int64) ([]*model.ReviewInfo, error)
+	SearchReview(context.Context, int64) (*model.ReviewInfo, error)
+	CreateReply(context.Context, *model.ReviewReplyInfo) (*model.ReviewReplyInfo, error)
 }
 
 type ReviewUsecase struct {
@@ -27,7 +29,7 @@ func NewReviewUserCase(reviewrepo ReviewRepo, logs log.Logger) *ReviewUsecase {
 
 func (rc *ReviewUsecase) CreateReview(ctx context.Context, info *model.ReviewInfo) (*model.ReviewInfo, error) {
 	//判断这个评论之前有人评价过吗？
-	order, err := rc.FindByOrder(ctx, info.OrderID)
+	order, err := rc.reviewRepo.FindByOrder(ctx, info.OrderID)
 	if err != nil {
 		rc.Log.Errorf("[biz] find by orderId in createReview has error")
 		return nil, err
@@ -47,11 +49,36 @@ func (rc *ReviewUsecase) CreateReview(ctx context.Context, info *model.ReviewInf
 	return item, nil
 }
 
-func (rc *ReviewUsecase) FindByOrder(ctx context.Context, order_id int64) ([]*model.ReviewInfo, error) {
-	order, err := rc.reviewRepo.FindByOrder(ctx, order_id)
+func (uc *ReviewUsecase) CreateReply(ctx context.Context, info *model.ReviewReplyInfo) (*model.ReviewReplyInfo, error) {
+	//参数校验
+	//1.1 是否已经有回复了
+	//1.2 水平越权
+	review, err := uc.reviewRepo.SearchReview(ctx, info.ReviewID)
 	if err != nil {
-		rc.Log.Errorf("[biz] find order has error")
-		return nil, errors.New("find order has error")
+		return nil, err
 	}
-	return order, nil
+	if review.HasReply == 1 {
+		return nil, errors.New("the business has reply,deny repeated reply ")
+	}
+	if review.StoreID != info.StoreID {
+		return nil, errors.New("the replyId  is not the direct business")
+	}
+	info.ReplyID = pkg.Gen()
+	reply, err := uc.reviewRepo.CreateReply(ctx, info)
+	if err != nil {
+		return nil, err
+	}
+	return reply, err
+}
+
+func (uc *ReviewUsecase) SearchReview(ctx context.Context, info *model.ReviewReplyInfo) (*model.ReviewInfo, error) {
+	if info == nil {
+		return nil, errors.New("[biz] reviewReply is null ")
+	}
+	review, err := uc.reviewRepo.SearchReview(ctx, info.ReviewID)
+	if err != nil {
+		return nil, errors.New("[biz] search review info has error")
+	}
+	return review, err
+
 }
