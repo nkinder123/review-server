@@ -16,3 +16,6 @@ data:
 snowflake:
   start_time: "2012-12-21"
   machine_id: 1
+register:
+  address: 127.0.0.1:8500
+  scheme: http
