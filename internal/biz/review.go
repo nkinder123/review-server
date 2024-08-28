@@ -13,6 +13,10 @@ type ReviewRepo interface {
 	FindByOrder(context.Context, int64) ([]*model.ReviewInfo, error)
 	SearchReview(context.Context, int64) (*model.ReviewInfo, error)
 	CreateReply(context.Context, *model.ReviewReplyInfo) (*model.ReviewReplyInfo, error)
+	CreateAppeal(context.Context, *model.ReviewAppealInfo) error
+	FindAppealInfoByReviewId(context.Context, int64) (*model.ReviewAppealInfo, error)
+	UpdateAppealInfo(context.Context, *model.ReviewAppealInfo) error
+	FindAppealInfoByAppealId(context.Context, int64) (*model.ReviewAppealInfo, error)
 }
 
 type ReviewUsecase struct {
@@ -81,4 +85,67 @@ func (uc *ReviewUsecase) SearchReview(ctx context.Context, info *model.ReviewRep
 	}
 	return review, err
 
+}
+
+// 商家appeal
+func (uc *ReviewUsecase) CreateAppeal(ctx context.Context, info *model.ReviewAppealInfo) error {
+	//判断之前的是否有过appeal
+	review_id := info.ReviewID
+	appealinfo, err := uc.reviewRepo.FindAppealInfoByReviewId(ctx, review_id)
+	if err != nil {
+		uc.Log.Errorf("[biz]find the appeal by review_id has error")
+		return nil
+	}
+	//是否水平越权
+	review, err := uc.reviewRepo.SearchReview(ctx, info.ReviewID)
+	if err != nil {
+		uc.Log.Errorf("[biz]search reveiw info has error")
+		return nil
+	}
+	if review.StoreID != info.StoreID {
+		uc.Log.Errorf("[biz]storId不一致，发生水平越权")
+		return errors.New("发生水平越权")
+	}
+	if appealinfo != nil {
+		//1。有，判断status是否>10
+		if appealinfo.Status == 10 {
+			uc.Log.Info("[biz]the appeal itme is updating ")
+			info.AppealID = pkg.Gen()
+			err = uc.reviewRepo.UpdateAppealInfo(ctx, info)
+			if err != nil {
+				uc.Log.Errorf("[biz]update appeal has error")
+				return err
+			}
+		} else {
+			uc.Log.Errorf("[biz]the appeal has op,don't repeated op")
+			return errors.New("appeal has oped")
+		}
+	} else {
+		//2 没有，直接create
+		uc.Log.Info("[biz]create appeal item")
+		if err := uc.reviewRepo.CreateAppeal(ctx, info); err != nil {
+			uc.Log.Errorf("[biz]create appeal item has error")
+			return err
+		}
+	}
+	return nil
+}
+
+// 评价
+func (uc *ReviewUsecase) OpReAppeal(ctx context.Context, info *model.ReviewAppealInfo) (*model.ReviewAppealInfo, error) {
+	appealinfo, err := uc.reviewRepo.FindAppealInfoByAppealId(ctx, info.AppealID)
+	if err != nil {
+		uc.Log.Errorf("[biz]find appeal by appealid has error")
+		return nil, err
+	}
+	if appealinfo.Status > 10 {
+		uc.Log.Errorf("[biz]the appeal has done")
+		return nil, errors.New("the appeal has done")
+	}
+	err = uc.reviewRepo.UpdateAppealInfo(ctx, info)
+	if err != nil {
+		uc.Log.Errorf("[biz]update op item  has error")
+		return nil, err
+	}
+	return info, nil
 }

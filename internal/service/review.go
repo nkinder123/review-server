@@ -68,3 +68,35 @@ func (s *ReviewService) ReplyReview(ctx context.Context, req *pb.ReplyReviewReq)
 	}
 	return &pb.ReplyReviewReply{ReplyId: reply.ReplyID}, nil
 }
+
+func (s *ReviewService) CreateAppeal(ctx context.Context, req *pb.CreateAppealRequest) (*pb.CreateAppealReply, error) {
+	reqs := &model.ReviewAppealInfo{
+		AppealID:  req.AppealId,
+		ReviewID:  req.ReviewId,
+		StoreID:   req.StoreId,
+		Reason:    req.Reason,
+		Content:   req.Content,
+		PicInfo:   req.PicInfo,
+		VideoInfo: req.VideoInfo,
+		Status:    10,
+	}
+
+	if err := s.uc.CreateAppeal(ctx, reqs); err != nil {
+		return nil, err
+	}
+	return &pb.CreateAppealReply{}, nil
+}
+
+// 评价
+func (s *ReviewService) OpReAppeal(ctx context.Context, req *pb.OpCreateAppealRequest) (*pb.OpCreateAppealReply, error) {
+	reqs := &model.ReviewAppealInfo{
+		AppealID:  req.AppealId,
+		OpUser:    req.OpUser,
+		OpRemarks: req.OpRemark,
+	}
+	appeal, err := s.uc.OpReAppeal(ctx, reqs)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.OpCreateAppealReply{AppealId: appeal.AppealID}, nil
+}

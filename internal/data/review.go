@@ -64,3 +64,34 @@ func (br *reviewRepo) SearchReview(ctx context.Context, review_id int64) (*model
 	}
 	return first, nil
 }
+
+func (br *reviewRepo) CreateAppeal(ctx context.Context, info *model.ReviewAppealInfo) error {
+	if err := br.data.query.WithContext(ctx).ReviewAppealInfo.Save(info); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (br *reviewRepo) FindAppealInfoByReviewId(ctx context.Context, reviewId int64) (*model.ReviewAppealInfo, error) {
+	reveiwinfo, err := br.data.query.WithContext(ctx).ReviewAppealInfo.Where(br.data.query.ReviewAppealInfo.ReviewID.Eq(reviewId)).First()
+	if err != nil {
+		return nil, err
+	}
+	return reveiwinfo, nil
+}
+
+func (br *reviewRepo) UpdateAppealInfo(ctx context.Context, info *model.ReviewAppealInfo) error {
+	_, err := br.data.query.WithContext(ctx).ReviewAppealInfo.Where(br.data.query.ReviewAppealInfo.AppealID.Eq(info.AppealID)).Updates(info)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (br *reviewRepo) FindAppealInfoByAppealId(ctx context.Context, appealId int64) (*model.ReviewAppealInfo, error) {
+	reveiwinfo, err := br.data.query.WithContext(ctx).ReviewAppealInfo.Where(br.data.query.ReviewAppealInfo.ReviewID.Eq(appealId)).First()
+	if err != nil {
+		return nil, err
+	}
+	return reveiwinfo, nil
+}
