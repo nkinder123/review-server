@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"review-server/internal/biz"
 	"review-server/internal/data/model"
 
@@ -70,6 +71,7 @@ func (s *ReviewService) ReplyReview(ctx context.Context, req *pb.ReplyReviewReq)
 }
 
 func (s *ReviewService) CreateAppeal(ctx context.Context, req *pb.CreateAppealRequest) (*pb.CreateAppealReply, error) {
+	s.uc.Log.Info("[rpc create appeal info has arrive]")
 	reqs := &model.ReviewAppealInfo{
 		AppealID:  req.AppealId,
 		ReviewID:  req.ReviewId,
@@ -84,16 +86,18 @@ func (s *ReviewService) CreateAppeal(ctx context.Context, req *pb.CreateAppealRe
 	if err := s.uc.CreateAppeal(ctx, reqs); err != nil {
 		return nil, err
 	}
-	return &pb.CreateAppealReply{}, nil
+	return &pb.CreateAppealReply{AppealId: reqs.AppealID}, nil
 }
 
 // 评价
 func (s *ReviewService) OpReAppeal(ctx context.Context, req *pb.OpCreateAppealRequest) (*pb.OpCreateAppealReply, error) {
 	reqs := &model.ReviewAppealInfo{
 		AppealID:  req.AppealId,
+		Status:    req.Status,
 		OpUser:    req.OpUser,
 		OpRemarks: req.OpRemark,
 	}
+	fmt.Printf("info:%#v", reqs.Status)
 	appeal, err := s.uc.OpReAppeal(ctx, reqs)
 	if err != nil {
 		return nil, err

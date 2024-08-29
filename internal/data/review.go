@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"review-server/internal/biz"
 	"review-server/internal/data/model"
@@ -74,14 +75,32 @@ func (br *reviewRepo) CreateAppeal(ctx context.Context, info *model.ReviewAppeal
 
 func (br *reviewRepo) FindAppealInfoByReviewId(ctx context.Context, reviewId int64) (*model.ReviewAppealInfo, error) {
 	reveiwinfo, err := br.data.query.WithContext(ctx).ReviewAppealInfo.Where(br.data.query.ReviewAppealInfo.ReviewID.Eq(reviewId)).First()
-	if err != nil {
-		return nil, err
-	}
-	return reveiwinfo, nil
+	return reveiwinfo, err
 }
 
 func (br *reviewRepo) UpdateAppealInfo(ctx context.Context, info *model.ReviewAppealInfo) error {
-	_, err := br.data.query.WithContext(ctx).ReviewAppealInfo.Where(br.data.query.ReviewAppealInfo.AppealID.Eq(info.AppealID)).Updates(info)
+	br.log.Info("[data update appeal info]")
+	_, err := br.data.query.WithContext(ctx).ReviewAppealInfo.Where(br.data.query.ReviewAppealInfo.ReviewID.Eq(info.ReviewID)).Updates(
+		map[string]interface{}{
+			"reason":  info.Reason,
+			"content": info.Content,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (br *reviewRepo) UpdateAppealInfoOp(ctx context.Context, info *model.ReviewAppealInfo) error {
+	fmt.Printf("info:", info.Status)
+	_, err := br.data.query.WithContext(ctx).ReviewAppealInfo.Where(br.data.query.ReviewAppealInfo.AppealID.Eq(info.AppealID)).Updates(
+		map[string]interface{}{
+			"status":     info.Status,
+			"op_remarks": info.OpRemarks,
+			"op_user":    info.OpUser,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -89,7 +108,7 @@ func (br *reviewRepo) UpdateAppealInfo(ctx context.Context, info *model.ReviewAp
 }
 
 func (br *reviewRepo) FindAppealInfoByAppealId(ctx context.Context, appealId int64) (*model.ReviewAppealInfo, error) {
-	reveiwinfo, err := br.data.query.WithContext(ctx).ReviewAppealInfo.Where(br.data.query.ReviewAppealInfo.ReviewID.Eq(appealId)).First()
+	reveiwinfo, err := br.data.query.WithContext(ctx).ReviewAppealInfo.Where(br.data.query.ReviewAppealInfo.AppealID.Eq(appealId)).First()
 	if err != nil {
 		return nil, err
 	}

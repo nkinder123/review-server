@@ -310,6 +310,9 @@ components:
                     type: string
                 opUser:
                     type: string
+                status:
+                    type: integer
+                    format: int32
         api.review.v1.ReplyReviewReply:
             type: object
             properties:

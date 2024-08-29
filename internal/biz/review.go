@@ -17,6 +17,7 @@ type ReviewRepo interface {
 	FindAppealInfoByReviewId(context.Context, int64) (*model.ReviewAppealInfo, error)
 	UpdateAppealInfo(context.Context, *model.ReviewAppealInfo) error
 	FindAppealInfoByAppealId(context.Context, int64) (*model.ReviewAppealInfo, error)
+	UpdateAppealInfoOp(context.Context, *model.ReviewAppealInfo) error
 }
 
 type ReviewUsecase struct {
@@ -92,7 +93,7 @@ func (uc *ReviewUsecase) CreateAppeal(ctx context.Context, info *model.ReviewApp
 	//判断之前的是否有过appeal
 	review_id := info.ReviewID
 	appealinfo, err := uc.reviewRepo.FindAppealInfoByReviewId(ctx, review_id)
-	if err != nil {
+	if err != nil && err.Error() != "record not found" {
 		uc.Log.Errorf("[biz]find the appeal by review_id has error")
 		return nil
 	}
@@ -109,8 +110,7 @@ func (uc *ReviewUsecase) CreateAppeal(ctx context.Context, info *model.ReviewApp
 	if appealinfo != nil {
 		//1。有，判断status是否>10
 		if appealinfo.Status == 10 {
-			uc.Log.Info("[biz]the appeal itme is updating ")
-			info.AppealID = pkg.Gen()
+			uc.Log.Info("[biz]the appeal item is updating ")
 			err = uc.reviewRepo.UpdateAppealInfo(ctx, info)
 			if err != nil {
 				uc.Log.Errorf("[biz]update appeal has error")
@@ -123,6 +123,7 @@ func (uc *ReviewUsecase) CreateAppeal(ctx context.Context, info *model.ReviewApp
 	} else {
 		//2 没有，直接create
 		uc.Log.Info("[biz]create appeal item")
+		info.AppealID = pkg.Gen()
 		if err := uc.reviewRepo.CreateAppeal(ctx, info); err != nil {
 			uc.Log.Errorf("[biz]create appeal item has error")
 			return err
@@ -142,7 +143,7 @@ func (uc *ReviewUsecase) OpReAppeal(ctx context.Context, info *model.ReviewAppea
 		uc.Log.Errorf("[biz]the appeal has done")
 		return nil, errors.New("the appeal has done")
 	}
-	err = uc.reviewRepo.UpdateAppealInfo(ctx, info)
+	err = uc.reviewRepo.UpdateAppealInfoOp(ctx, info)
 	if err != nil {
 		uc.Log.Errorf("[biz]update op item  has error")
 		return nil, err
