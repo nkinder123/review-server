@@ -1,6 +1,8 @@
 package data
 
 import (
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -13,25 +15,45 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewReviewRepo, Connect)
+var ProviderSet = wire.NewSet(NewData, NewReviewRepo, Connect, NewElasticSearch, NewRedsiClient)
 
 // Data .
 type Data struct {
 	// TODO wrapped database client
-	query *query.Query
-	log   *log.Helper
+	query         *query.Query
+	elasticClient *elasticsearch.TypedClient
+	log           *log.Helper
+	rdb           *redis.Client
 }
 
 // NewData .
-func NewData(db *gorm.DB, logger log.Logger) (*Data, func(), error) {
+func NewData(client *elasticsearch.TypedClient, rdb *redis.Client, db *gorm.DB, logger log.Logger) (*Data, func(), error) {
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
 	}
 	query.SetDefault(db)
 	return &Data{
-		query: query.Q,
-		log:   log.NewHelper(logger),
+		query:         query.Q,
+		elasticClient: client,
+		log:           log.NewHelper(logger),
+		rdb:           rdb,
 	}, cleanup, nil
+}
+
+func NewElasticSearch(cfg *conf.Elasticsearch) (*elasticsearch.TypedClient, error) {
+	c := elasticsearch.Config{
+		Addresses: cfg.Addresses,
+	}
+	return elasticsearch.NewTypedClient(c)
+}
+
+func NewRedsiClient(cfg *conf.Data) *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:         cfg.Redis.Addr,
+		ReadTimeout:  cfg.Redis.ReadTimeout.AsDuration(),
+		WriteTimeout: cfg.Redis.WriteTimeout.AsDuration(),
+	})
+	return client
 }
 
 func Connect(cfg *conf.Data) *gorm.DB {

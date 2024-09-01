@@ -99,7 +99,7 @@ func main() {
 		panic(err)
 	}
 	snowflake := bc.Snowflake
-	app, cleanup, err := wireApp(bc.Server, bc.Register, bc.Data, logger)
+	app, cleanup, err := wireApp(bc.Server, bc.Elasticsearch, bc.Register, bc.Data, logger)
 	pkg.Init(snowflake.GetStartTime(), snowflake.GetMachineId())
 
 	if err != nil {

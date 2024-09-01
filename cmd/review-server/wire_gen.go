@@ -23,9 +23,14 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, register *conf.Register, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, elasticsearch *conf.Elasticsearch, register *conf.Register, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
+	typedClient, err := data.NewElasticSearch(elasticsearch)
+	if err != nil {
+		return nil, nil, err
+	}
+	client := data.NewRedsiClient(confData)
 	db := data.Connect(confData)
-	dataData, cleanup, err := data.NewData(db, logger)
+	dataData, cleanup, err := data.NewData(typedClient, client, db, logger)
 	if err != nil {
 		return nil, nil, err
 	}

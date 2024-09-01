@@ -29,7 +29,7 @@ paths:
         post:
             tags:
                 - Business
-            operationId: Business_GreateAppeal
+            operationId: Business_CreateAppeal
             requestBody:
                 content:
                     application/json:
@@ -61,6 +61,42 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/api.business.v1.CreateReplyResp'
+    /v1/op/opcreate:
+        post:
+            tags:
+                - Appeal
+            operationId: Appeal_OpCreateAppeal
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.appeal.v1.OpCreateAppealRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.appeal.v1.OpCreateAppealReply'
+    /v1/review/bystore:
+        post:
+            tags:
+                - Review
+            operationId: Review_SearchReviewByStoreId
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.review.v1.SearchReviewRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.review.v1.SearchReveiwReply'
     /v1/review/create:
         post:
             tags:
@@ -189,6 +225,21 @@ paths:
                                 $ref: '#/components/schemas/api.review.v1.UpdateReviewReply'
 components:
     schemas:
+        api.appeal.v1.OpCreateAppealReply:
+            type: object
+            properties: {}
+        api.appeal.v1.OpCreateAppealRequest:
+            type: object
+            properties:
+                appealId:
+                    type: string
+                opRemark:
+                    type: string
+                opUser:
+                    type: string
+                status:
+                    type: integer
+                    format: int32
         api.business.v1.CreateAppealReply:
             type: object
             properties:
@@ -331,6 +382,20 @@ components:
                     type: string
                 videoInfo:
                     type: string
+        api.review.v1.SearchReveiwReply:
+            type: object
+            properties: {}
+        api.review.v1.SearchReviewRequest:
+            type: object
+            properties:
+                storeId:
+                    type: string
+                page:
+                    type: integer
+                    format: int32
+                limit:
+                    type: integer
+                    format: int32
         api.review.v1.UpdateReviewReply:
             type: object
             properties: {}
@@ -344,6 +409,7 @@ components:
                     type: string
             description: The response message containing the greetings
 tags:
+    - name: Appeal
     - name: Business
     - name: Greeter
       description: The greeting service definition.

@@ -12,10 +12,13 @@ data:
   redis:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s
-    write_timeout: 0.2s
+    write_timeout: 2s
 snowflake:
   start_time: "2012-12-21"
   machine_id: 1
 register:
   address: 127.0.0.1:8500
   scheme: http
+elasticsearch:
+  addresses:
+    - "http://127.0.0.1:9200"

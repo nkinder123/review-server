@@ -3,9 +3,12 @@ package biz
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"review-server/internal/data/model"
 	"review-server/pkg"
+	"strings"
+	"time"
 )
 
 type ReviewRepo interface {
@@ -18,6 +21,7 @@ type ReviewRepo interface {
 	UpdateAppealInfo(context.Context, *model.ReviewAppealInfo) error
 	FindAppealInfoByAppealId(context.Context, int64) (*model.ReviewAppealInfo, error)
 	UpdateAppealInfoOp(context.Context, *model.ReviewAppealInfo) error
+	Getdata(context.Context, *FindStruct) ([]*MyReviewInfo, error)
 }
 
 type ReviewUsecase struct {
@@ -149,4 +153,66 @@ func (uc *ReviewUsecase) OpReAppeal(ctx context.Context, info *model.ReviewAppea
 		return nil, err
 	}
 	return info, nil
+}
+
+type FindStruct struct {
+	StoreId int64
+	Page    int32
+	Limit   int32
+}
+
+func (uc *ReviewUsecase) FindReveiwBySotre(ctx context.Context, storeId int64, page int32, limite int32) ([]*MyReviewInfo, error) {
+	if page < 0 {
+		return nil, errors.New("page is invalidate")
+	}
+	dataReq := &FindStruct{
+		StoreId: storeId,
+		Page:    page,
+		Limit:   limite,
+	}
+	reviewes, err := uc.reviewRepo.Getdata(ctx, dataReq)
+	if err != nil {
+		uc.Log.Errorf("[biz]-->[data] find review item by storeId has error")
+		return nil, err
+	}
+	for _, index := range reviewes {
+		fmt.Printf("[biz]marshal review info:%#v\n", index)
+	}
+	return reviewes, nil
+}
+
+// 传进来的是"2024-08-31 09:33:41",在marshal到reviewinfo的时候是timeTime结构
+// 和go的的不一样
+type MyReviewInfo struct {
+	*model.ReviewInfo
+	ID           int64  `json:"id,string"`
+	OrderID      int64  `json:"order_id,string"`
+	ReviewID     int64  `json:"review_id,string"`
+	SkuID        int64  `json:"sku_id,string"`
+	SpuID        int64  `json:"spu_id,string"`
+	StoreID      int64  `json:"store_id,string"`
+	UserID       int64  `json:"user_id,string"`
+	CreateAt     MyTime `json:"create_at"`
+	UpdateAt     MyTime `json:"update_at"`
+	Version      int32  `json:"version,string"`
+	Score        int32  `json:"score,string"`
+	ServiceScore int32  `json:"service_score,string"`
+	ExpressScore int32  `json:"express_score,string"`
+	HasMedia     int32  `json:"has_media,string"`
+	Anonymous    int32  `json:"anonymous,string"`
+	Status       int32  `json:"status,string"`
+	IsDefault    int32  `json:"is_default,string"`
+	HasReply     int32  `json:"has_reply,string"`
+}
+
+type MyTime time.Time
+
+func (t *MyTime) UnmarshalJSON(d []byte) error {
+	trim := strings.Trim(string(d), `"`)
+	parse, err := time.Parse(time.DateTime, trim)
+	if err != nil {
+		return err
+	}
+	*t = MyTime(parse)
+	return nil
 }

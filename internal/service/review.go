@@ -104,3 +104,13 @@ func (s *ReviewService) OpReAppeal(ctx context.Context, req *pb.OpCreateAppealRe
 	}
 	return &pb.OpCreateAppealReply{AppealId: appeal.AppealID}, nil
 }
+
+// elastcisearch find review item by storeId
+func (s *ReviewService) SearchReviewByStoreId(ctx context.Context, req *pb.SearchReviewRequest) (*pb.SearchReveiwReply, error) {
+	_, err := s.uc.FindReveiwBySotre(ctx, req.StoreId, req.Page, req.Limit)
+	if err != nil {
+		fmt.Printf("[service]-->[biz]find Review BY storeId has error")
+		return nil, nil
+	}
+	return &pb.SearchReveiwReply{}, nil
+}

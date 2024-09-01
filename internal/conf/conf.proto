@@ -10,6 +10,7 @@ message Bootstrap {
   Data data = 2;
   Snowflake snowflake =3;
   Register register=4;
+  Elasticsearch elasticsearch=5;
 }
 
 message Server {
@@ -50,4 +51,8 @@ message Snowflake{
 message Register{
   string Address=1;
   string Scheme=2;
+}
+
+message Elasticsearch{
+  repeated string addresses=1;
 }
