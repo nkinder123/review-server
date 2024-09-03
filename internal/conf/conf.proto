@@ -27,6 +27,13 @@ message Server {
   HTTP http = 1;
   GRPC grpc = 2;
 }
+message Register{
+  message Consul{
+    string addr=1;
+    string scheme=2;
+  }
+  Consul consul=1;
+}
 
 message Data {
   message Database {
@@ -48,10 +55,7 @@ message Snowflake{
   int64 machine_id =2;
 }
 
-message Register{
-  string Address=1;
-  string Scheme=2;
-}
+
 
 message Elasticsearch{
   repeated string addresses=1;

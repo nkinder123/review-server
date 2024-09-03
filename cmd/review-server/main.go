@@ -3,9 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
 	"github.com/go-kratos/kratos/v2/config/file"
-	"github.com/hashicorp/consul/api"
+	"github.com/go-kratos/kratos/v2/registry"
 	"os"
 	"review-server/internal/conf"
 	"review-server/pkg"
@@ -37,19 +36,9 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
-// 服务注册
-func ReviewRegister(conf *conf.Register) *consul.Registry {
-	c := api.DefaultConfig()
-	c.Address = conf.Address
-	c.Scheme = conf.Scheme
-	client, err := api.NewClient(c)
-	if err != nil {
-		panic("register review-service has error")
-	}
-	return consul.New(client)
-}
+//192.168.65.254
 
-func newApp(logger log.Logger, r *conf.Register, gs *grpc.Server, hs *http.Server) *kratos.App {
+func newApp(logger log.Logger, r registry.Registrar, gs *grpc.Server, hs *http.Server) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -60,9 +49,11 @@ func newApp(logger log.Logger, r *conf.Register, gs *grpc.Server, hs *http.Serve
 			gs,
 			hs,
 		),
-		kratos.Registrar(ReviewRegister(r)),
+		kratos.Registrar(r),
 	)
 }
+
+// 服务注册
 
 func main() {
 	z, err := pkg.InitLog()
@@ -99,6 +90,7 @@ func main() {
 		panic(err)
 	}
 	snowflake := bc.Snowflake
+	fmt.Printf("consul:%v", bc.Register.Consul)
 	app, cleanup, err := wireApp(bc.Server, bc.Elasticsearch, bc.Register, bc.Data, logger)
 	pkg.Init(snowflake.GetStartTime(), snowflake.GetMachineId())
 

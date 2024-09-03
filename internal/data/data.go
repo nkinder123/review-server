@@ -65,7 +65,7 @@ func Connect(cfg *conf.Data) *gorm.DB {
 	case "mysql":
 		db, err := gorm.Open(mysql.Open(cfg.Database.Source))
 		if err != nil {
-			log.Fatal("mysql db connect has error")
+			log.Fatal("mysql db connect has error:", err)
 			return nil
 		}
 		return db

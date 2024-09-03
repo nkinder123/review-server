@@ -1,11 +1,12 @@
-FROM golang:1.19 AS builder
+FROM golang:1.22 AS builder
 
 COPY . /src
-WORKDIR /src
+WORKDIR /src/cmd/review-server/
 
-RUN GOPROXY=https://goproxy.cn make build
+RUN go build -o ../../bin/review-service
 
 FROM debian:stable-slim
+
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		ca-certificates  \
@@ -21,4 +22,4 @@ EXPOSE 8000
 EXPOSE 9000
 VOLUME /data/conf
 
-CMD ["./server", "-conf", "/data/conf"]
+CMD ["./review-service", "-conf", "/data/conf"]

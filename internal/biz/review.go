@@ -216,3 +216,5 @@ func (t *MyTime) UnmarshalJSON(d []byte) error {
 	*t = MyTime(parse)
 	return nil
 }
+
+//CMD ["go run main.go", "-conf", "/data/conf"]
